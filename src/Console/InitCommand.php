@@ -29,7 +29,8 @@ class InitCommand extends Command
         $this
             ->setName('init')
             ->setDescription('Create a new October CMS project.')
-            ->addArgument('directory', InputArgument::OPTIONAL, 'Name of the working directory', '.');
+            ->addArgument('projectname', InputArgument::OPTIONAL, 'Name of the project/directory', '.')
+            ->addArgument('gittheme', InputArgument::OPTIONAL, 'GIT theme', 'https://github.com/rangrage/oc-mdbLoaded-theme.git');
     }
 
     /**
@@ -44,8 +45,7 @@ class InitCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $output->writeln('<info>Creating project directory...</info>');
-
-        $dir = getcwd() . DS . $input->getArgument('directory');
+        $dir = getcwd() . DS . $input->getArgument('projectname');
 
         $this->createWorkingDirectory($dir);
 
@@ -58,7 +58,7 @@ class InitCommand extends Command
             return $output->writeln('<comment>october.yaml already exists: ' . $target . '</comment>');
         }
 
-        $this->copyYamlTemplate($template, $target);
+        $this->copyYamlTemplate($template, $target, $input->getArgument('projectname'), $input->getArgument('gittheme'));
 
         $output->writeln('<comment>Done! Now edit your october.yaml and run october install.</comment>');
 
@@ -83,13 +83,16 @@ class InitCommand extends Command
      *
      * @throws \RuntimeException
      */
-    protected function copyYamlTemplate($template, $target)
+    protected function copyYamlTemplate($template, $target, $projectname, $gittheme)
     {
         if ( ! file_exists($template)) {
             throw new RuntimeException('Cannot find october.yaml template: ' . $template);
         }
 
-        copy($template, $target);
+        $data = file_get_contents($template);
+        $data = str_replace(['[[projectname]]','[[gittheme]]'], [$projectname, $gittheme], $data);
+        
+        file_put_contents($target, $data);
 
         if ( ! file_exists($target)) {
             throw new RuntimeException('october.yaml could not be created');
