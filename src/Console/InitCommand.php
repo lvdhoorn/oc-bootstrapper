@@ -30,7 +30,8 @@ class InitCommand extends Command
             ->setName('init')
             ->setDescription('Create a new October CMS project.')
             ->addArgument('projectname', InputArgument::OPTIONAL, 'Name of the project/directory', '.')
-            ->addArgument('gittheme', InputArgument::OPTIONAL, 'GIT theme', 'https://github.com/rangrage/oc-mdbLoaded-theme.git');
+            ->addArgument('gittheme', InputArgument::OPTIONAL, 'GIT theme', 'https://github.com/rangrage/oc-mdbLoaded-theme.git')
+            ->addArgument('createdb', InputArgument::OPTIONAL, 'Create db', 'yes');
     }
 
     /**
@@ -56,6 +57,14 @@ class InitCommand extends Command
 
         if (file_exists($target)) {
             return $output->writeln('<comment>october.yaml already exists: ' . $target . '</comment>');
+        }
+        $createDb = strtolower($input->getArgument('createdb'));
+
+        if($createDb == 'y' || $createDb == 'yes'){
+            $output->writeln('<info>Creating project database...</info>');
+            $conn = new \PDO("mysql:host=localhost;", 'root', '');
+            $conn->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+            $conn->exec('CREATE DATABASE '.$input->getArgument('projectname'));
         }
 
         $this->copyYamlTemplate($template, $target, $input->getArgument('projectname'), $input->getArgument('gittheme'));
